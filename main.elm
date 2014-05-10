@@ -53,13 +53,20 @@ stepPlay e g = case e of
   Tick a -> let b = g.bird
                 b' = if a then flyUp b else flyDown b
                 obs' = filter visibleOb <| map shiftOb g.obstacles
-                state' = if collision b' obs' then GameOver else Active
+                state' = if anyCollision b' obs' then GameOver else Active
             in { g | bird <- b', obstacles <- obs', state <- state' }
   Add obs -> { g | obstacles <- obs :: g.obstacles }
   Click -> g
 
-collision : Bird -> [Obstacle] -> Bool
-collision b obs = length obs == 2
+anyCollision : Bird -> [Obstacle] -> Bool
+anyCollision b obs = let bx = toFloat b.x
+                         by = toFloat b.y
+                         outOfBounds b = b.y > playAreaTop || b.y < playAreaBottom
+                         sameX b o = bx == o.x
+                         between x l u = x >= l && x <= u
+                         sameY b o = between by (o.y - o.height) (o.y + o.height)
+                         collision o = b `sameX` o && (outOfBounds b || b `sameY` o)
+                     in any collision obs
 
 visibleOb : Obstacle -> Bool
 visibleOb ob = ob.x > -500
@@ -95,7 +102,7 @@ defaultBird : Bird
 defaultBird = {x = -300, y = 0, vy = 0}
 
 defaultObstacle : Obstacle
-defaultObstacle = { x = 500, y = toFloat playAreaTop, height = 500, width = 60 }
+defaultObstacle = { x = 500, y = toFloat playAreaTop, height = 300, width = 60 }
 
 playArea : PlayArea
 playArea = { height = 500, width = 900 }
@@ -103,10 +110,13 @@ playArea = { height = 500, width = 900 }
 playAreaTop : Int
 playAreaTop = div playArea.height 2
 
+playAreaBottom : Int
+playAreaBottom = 0 - div playArea.height 2
+
 newObstacle : Float -> Position -> Obstacle
 newObstacle f p = let o = defaultObstacle
                    in { o |
-                     height <- clamp 0 500 (f * o.height),
+                     height <- clamp 0 300 (f * o.height),
                      y <- case p of
                             Bottom-> -o.y
                             Skip -> o.y + 10000000
@@ -133,4 +143,4 @@ renderObs : [Obstacle] -> Form
 renderObs obs = group <| map renderOb obs
 
 renderOb : Obstacle -> Form
-renderOb ob = move (ob.x, ob.y) <| filled blue <| rect ob.width ob.height
+renderOb ob = move (ob.x, ob.y) <| filled blue <| rect ob.width (2 * ob.height)
