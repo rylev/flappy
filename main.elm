@@ -2,16 +2,30 @@ import Window
 import Keyboard
 
 main : Signal Element
-main = render <~ Window.dimensions ~ bird
+main = lift render <| (foldp stepGame defaultGame input)
 
 -- Input
-input : Signal Int
-input = let getY keys = keys.y
-        in lift getY <| sampleOn (fps 30) Keyboard.arrows
+data Event = Tick | Add Obstacle | UpArrow Bool
+
+frameRate : Signal Time
+frameRate = fps 30
+
+input : Signal Event
+input = merges [
+          lift UpArrow keyboardInput,
+          lift (\_ -> Tick) frameRate
+        ]
+
+keyboardInput : Signal Bool
+keyboardInput = let isUp keys = keys.y == 1
+                in lift isUp <| sampleOn frameRate Keyboard.arrows
 
 -- Logic
-bird : Signal Bird
-bird = foldp fly defaultBird input
+
+
+
+stepGame : Event -> Game -> Game
+stepGame e g = g
 
 fly : Int -> Bird -> Bird
 fly dir bird = let vy' = if dir > 0 then bird.vy + 2
@@ -20,20 +34,29 @@ fly dir bird = let vy' = if dir > 0 then bird.vy + 2
                in {bird | y <- y', vy <- clamp -10 10 vy'}
 
 -- Model
-type Bird = { y : Int, vy : Float }
+type Game = {}
+type Bird = { x : Int, y : Int, vy : Float }
+type Obstacle = { x : Int, y : Int, height : Int, width : Int }
 
+defaultGame = {}
 defaultBird : Bird
-defaultBird = {y = 0, vy = 0}
+defaultBird = {x = -300, y = 0, vy = 0}
+
+defaultObstacle : Obstacle
+defaultObstacle = { x = 300, y = 0, height = 100, width = 40 }
 
 -- View
-render : (Int, Int) -> Bird -> Element
-render wds bird = bg wds <| playArea <| renderBird bird
+render : Game -> Element
+render g = bg (200, 200) <| playArea (renderBird defaultBird) (renderObs [defaultObstacle])
 
 bg : (Int, Int) -> Element -> Element
 bg (ww, wh) pa = color green <| container ww wh middle pa
 
-playArea : Form -> Element
-playArea bird = color white <| collage 900 500 [bird]
+playArea : Form -> Form -> Element
+playArea bird obs = color white <| collage 900 500 [bird, obs]
 
 renderBird : Bird -> Form
-renderBird bird = move (0, toFloat bird.y) <| toForm <| fittedImage 60 60 "flappy.png"
+renderBird bird = move (toFloat bird.x, toFloat bird.y) <| toForm <| fittedImage 60 60 "flappy.png"
+
+renderObs : [Obstacle] -> Form
+renderObs _ = filled blue <| rect 10 10
