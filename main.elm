@@ -1,12 +1,13 @@
 import Window
 import Keyboard
 import Random
+import Mouse
 
 main : Signal Element
 main = lift render Window.dimensions ~ (foldp stepGame defaultGame input)
 
 -- Input
-data Event = Add Obstacle | Tick Bool
+data Event = Add Obstacle | Tick Bool | Click
 
 frameRate : Signal Time
 frameRate = fps 30
@@ -17,7 +18,8 @@ obsInterval = every <| 1 * second
 input : Signal Event
 input = merges [
           lift Tick keyboardInput,
-          lift Add createObstacle
+          lift Add createObstacle,
+          lift (\_ -> Click) Mouse.clicks
         ]
 
 createObstacle : Signal Obstacle
@@ -37,12 +39,27 @@ keyboardInput = let isUp keys = keys.y == 1
 
 -- Logic
 stepGame : Event -> Game -> Game
-stepGame e g = case e of
+stepGame e g = case g.state of
+  Active -> stepPlay e g
+  GameOver -> gameOver e g
+
+gameOver : Event -> Game -> Game
+gameOver e g = case e of
+  Click -> defaultGame
+  _ -> g
+
+stepPlay : Event -> Game -> Game
+stepPlay e g = case e of
   Tick a -> let b = g.bird
                 b' = if a then flyUp b else flyDown b
                 obs' = filter visibleOb <| map shiftOb g.obstacles
-            in { g | bird <- b', obstacles <- obs' }
+                state' = if collision b' obs' then GameOver else Active
+            in { g | bird <- b', obstacles <- obs', state <- state' }
   Add obs -> { g | obstacles <- obs :: g.obstacles }
+  Click -> g
+
+collision : Bird -> [Obstacle] -> Bool
+collision b obs = length obs == 2
 
 visibleOb : Obstacle -> Bool
 visibleOb ob = ob.x > -500
@@ -64,13 +81,15 @@ fly vy bird = let y' = bird.y + vy
                in {bird | y <- y', vy <- vy' }
 
 -- Model
-type Game = { bird : Bird, obstacles : [Obstacle] }
+type Game = { bird : Bird, obstacles : [Obstacle], state : State }
 type Bird = { x : Int, y : Int, vy : Int }
 type Obstacle = { x : Float, y : Float, height : Float, width : Float }
 type PlayArea = { height : Int, width : Int }
 
+data State = Active | GameOver
+
 defaultGame : Game
-defaultGame = { bird = defaultBird, obstacles = [] }
+defaultGame = { bird = defaultBird, obstacles = [], state = Active }
 
 defaultBird : Bird
 defaultBird = {x = -300, y = 0, vy = 0}
@@ -96,13 +115,16 @@ newObstacle f p = let o = defaultObstacle
 
 -- View
 render : (Int, Int) -> Game -> Element
-render winDim g = bg winDim <| renderPlayArea (renderBird g.bird) (renderObs g.obstacles)
+render winDim g = let renderContent content = bg winDim <| renderPlayArea content
+  in case g.state of
+    Active -> renderContent [renderBird g.bird, renderObs g.obstacles]
+    GameOver -> renderContent [toForm <| asText "Game Over!!"]
 
 bg : (Int, Int) -> Element -> Element
 bg (ww, wh) pa = color green <| container ww wh middle pa
 
-renderPlayArea : Form -> Form -> Element
-renderPlayArea bird obs = color white <| collage playArea.width playArea.height [bird, obs]
+renderPlayArea : [Form] -> Element
+renderPlayArea content = color white <| collage playArea.width playArea.height content
 
 renderBird : Bird -> Form
 renderBird bird = move (toFloat bird.x, toFloat bird.y) <| toForm <| fittedImage 60 60 "flappy.png"
