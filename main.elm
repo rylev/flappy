@@ -14,16 +14,18 @@ bird : Signal Bird
 bird = foldp fly defaultBird input
 
 fly : Int -> Bird -> Bird
-fly dir bird = if dir == 1 then {bird | y <- bird.y + 20} else { bird | y <- bird.y - 20 }
+fly dir bird = let vy' = if dir > 0 then bird.vy + 2
+                        else bird.vy - 2
+                   y' = bird.y + vy'
+               in {bird | y <- y', vy <- clamp -10 10 vy'}
 
 -- Model
-type Bird = { x : Int, y : Int }
+type Bird = { y : Int, vy : Float }
 
 defaultBird : Bird
-defaultBird = {x = 0, y = 0}
+defaultBird = {y = 0, vy = 0}
 
 -- View
-
 render : (Int, Int) -> Bird -> Element
 render wds bird = bg wds <| playArea <| renderBird bird
 
@@ -33,6 +35,5 @@ bg (ww, wh) pa = color green <| container ww wh middle pa
 playArea : Form -> Element
 playArea bird = color white <| collage 900 500 [bird]
 
-
 renderBird : Bird -> Form
-renderBird bird = move (toFloat bird.x, toFloat bird.y) <| toForm <| fittedImage 60 60 "flappy.png"
+renderBird bird = move (0, toFloat bird.y) <| toForm <| fittedImage 60 60 "flappy.png"
