@@ -21,7 +21,7 @@ input = merges [
         ]
 
 createObstacle : Signal Obstacle
-createObstacle = lift newObstacle <| Random.float obsInterval
+createObstacle = newObstacle <~ Random.float obsInterval ~ Random.float obsInterval
 
 keyboardInput : Signal Bool
 keyboardInput = let isUp keys = keys.y == 1
@@ -33,14 +33,14 @@ stepGame e g = case e of
   Tick a -> let b = g.bird
                 b' = if a then flyUp b else flyDown b
                 obs' = filter visibleOb <| map shiftOb g.obstacles
-               in { g | bird <- b', obstacles <- obs' }
+            in { g | bird <- b', obstacles <- obs' }
   Add obs -> { g | obstacles <- obs :: g.obstacles }
 
 visibleOb : Obstacle -> Bool
 visibleOb ob = ob.x > -500
 
 shiftOb : Obstacle -> Obstacle
-shiftOb ob = { ob | x <- ob.x - 1 }
+shiftOb ob = { ob | x <- ob.x - 10 }
 
 flyUp : Bird -> Bird
 flyUp bird = let vy' = bird.vy + 2
@@ -51,12 +51,15 @@ flyDown bird = let vy' = bird.vy - 2
                in fly vy' bird
 
 fly : Int -> Bird -> Bird
-fly vy' bird = let y' = bird.y + vy'
-               in {bird | y <- y', vy <- clamp -10 10 vy'}
+fly vy bird = let y' = bird.y + vy
+                  vy' = clamp -10 10 vy
+               in {bird | y <- y', vy <- vy' }
+
 -- Model
 type Game = { bird : Bird, obstacles : [Obstacle] }
 type Bird = { x : Int, y : Int, vy : Int }
-type Obstacle = { x : Int, y : Int, height : Int, width : Int }
+type Obstacle = { x : Float, y : Float, height : Float, width : Float }
+type PlayArea = { height : Int, width : Int }
 
 defaultGame : Game
 defaultGame = { bird = defaultBird, obstacles = [] }
@@ -65,20 +68,27 @@ defaultBird : Bird
 defaultBird = {x = -300, y = 0, vy = 0}
 
 defaultObstacle : Obstacle
-defaultObstacle = { x = 300, y = 0, height = 100, width = 40 }
+defaultObstacle = { x = 500, y = toFloat playAreaTop, height = 500, width = 60 }
 
-newObstacle : Float -> Obstacle
-newObstacle f = { defaultObstacle | x <- clamp 0 500 (ceiling (f * (toFloat defaultObstacle.x))) }
+playArea : PlayArea
+playArea = { height = 500, width = 900 }
+
+playAreaTop : Int
+playAreaTop = div playArea.height 2
+
+newObstacle : Float -> Float -> Obstacle
+newObstacle f tb = { defaultObstacle |
+                     height <- clamp 0 500 (f * defaultObstacle.height) }
 
 -- View
 render : (Int, Int) -> Game -> Element
-render winDim g = bg winDim <| playArea (renderBird g.bird) (renderObs g.obstacles)
+render winDim g = bg winDim <| renderPlayArea (renderBird g.bird) (renderObs g.obstacles)
 
 bg : (Int, Int) -> Element -> Element
 bg (ww, wh) pa = color green <| container ww wh middle pa
 
-playArea : Form -> Form -> Element
-playArea bird obs = color white <| collage 900 500 [bird, obs]
+renderPlayArea : Form -> Form -> Element
+renderPlayArea bird obs = color white <| collage playArea.width playArea.height [bird, obs]
 
 renderBird : Bird -> Form
 renderBird bird = move (toFloat bird.x, toFloat bird.y) <| toForm <| fittedImage 60 60 "flappy.png"
@@ -87,4 +97,4 @@ renderObs : [Obstacle] -> Form
 renderObs obs = group <| map renderOb obs
 
 renderOb : Obstacle -> Form
-renderOb ob = move (toFloat ob.x, toFloat ob.y) <| filled blue <| rect (toFloat ob.width) (toFloat ob.height)
+renderOb ob = move (ob.x, ob.y) <| filled blue <| rect ob.width ob.height
