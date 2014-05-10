@@ -12,7 +12,7 @@ frameRate : Signal Time
 frameRate = fps 30
 
 obsInterval : Signal Time
-obsInterval = every <| 2 * second
+obsInterval = every <| 1 * second
 
 input : Signal Event
 input = merges [
@@ -21,7 +21,15 @@ input = merges [
         ]
 
 createObstacle : Signal Obstacle
-createObstacle = newObstacle <~ Random.float obsInterval ~ Random.float obsInterval
+createObstacle = newObstacle <~ Random.float obsInterval ~ topOrBottom
+
+data Position = Top | Bottom | Skip
+
+topOrBottom : Signal Position
+topOrBottom = let position f = if | f < 0.4 -> Bottom
+                                   | f >= 0.4 && f < 0.6 -> Skip
+                                   | f >= 0.6 -> Top
+              in lift position <| Random.float obsInterval
 
 keyboardInput : Signal Bool
 keyboardInput = let isUp keys = keys.y == 1
@@ -76,9 +84,15 @@ playArea = { height = 500, width = 900 }
 playAreaTop : Int
 playAreaTop = div playArea.height 2
 
-newObstacle : Float -> Float -> Obstacle
-newObstacle f tb = { defaultObstacle |
-                     height <- clamp 0 500 (f * defaultObstacle.height) }
+newObstacle : Float -> Position -> Obstacle
+newObstacle f p = let o = defaultObstacle
+                   in { o |
+                     height <- clamp 0 500 (f * o.height),
+                     y <- case p of
+                            Bottom-> -o.y
+                            Skip -> o.y + 10000000
+                            Top -> o.y
+                     }
 
 -- View
 render : (Int, Int) -> Game -> Element
