@@ -13,7 +13,7 @@ frameRate : Signal Time
 frameRate = fps 30
 
 obsInterval : Signal Time
-obsInterval = every <| 1 * second
+obsInterval = every <| 500 * millisecond
 
 input : Signal Event
 input = merges [
@@ -62,7 +62,7 @@ anyCollision : Bird -> [Obstacle] -> Bool
 anyCollision b obs = let bx = toFloat b.x
                          by = toFloat b.y
                          outOfBounds b = b.y > playAreaTop || b.y < playAreaBottom
-                         sameX b o = bx == o.x
+                         sameX b o = bx == (o.x - (o.width / 2))
                          between x l u = x >= l && x <= u
                          sameY b o = between by (o.y - o.height) (o.y + o.height)
                          collision o = b `sameX` o && (outOfBounds b || b `sameY` o)
@@ -102,7 +102,10 @@ defaultBird : Bird
 defaultBird = {x = -300, y = 0, vy = 0}
 
 defaultObstacle : Obstacle
-defaultObstacle = { x = 500, y = toFloat playAreaTop, height = 300, width = 60 }
+defaultObstacle = { x = toFloat playAreaRight,
+                    y = toFloat playAreaTop,
+                    height = 300,
+                    width = 60 }
 
 playArea : PlayArea
 playArea = { height = 500, width = 900 }
@@ -110,8 +113,14 @@ playArea = { height = 500, width = 900 }
 playAreaTop : Int
 playAreaTop = div playArea.height 2
 
+playAreaRight : Int
+playAreaRight = div playArea.width 2
+
+playAreaLeft : Int
+playAreaLeft = 0 - playAreaRight
+
 playAreaBottom : Int
-playAreaBottom = 0 - div playArea.height 2
+playAreaBottom = 0 - playAreaTop
 
 newObstacle : Float -> Position -> Obstacle
 newObstacle f p = let o = defaultObstacle
