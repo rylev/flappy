@@ -31,12 +31,16 @@ input = mergeMany [
         ]
 
 createObstacle : Signal M.Obstacle
+              -- The following is just to get it to compile. Need to figure out the
+              -- new elm generators to bring back the proper functionality
 createObstacle = M.newObstacle <~ (map2 (\x y -> toFloat x / toFloat y) Window.width Window.height) ~ topOrBottom
 
 topOrBottom : Signal M.Position
 topOrBottom = let position f = if | f < 0.4 -> M.Bottom
                                    | f >= 0.4 && f < 0.6 -> M.Skip
                                    | f >= 0.6 -> M.Top
+              -- The following is just to get it to compile. Need to figure out the
+              -- new elm generators to bring back the proper functionality
               in map position (map2 (\x y -> toFloat x / toFloat y) Window.width Window.height)
 
 keyboardInput : Signal Bool
