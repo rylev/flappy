@@ -1,8 +1,8 @@
 module Controller where
 
-import Model (..)
+import Model exposing (..)
 
-data Event = Add Obstacle | Tick Bool | Click
+type Event = Add Obstacle | Tick Bool | Click
 
 stepGame : Event -> Game -> Game
 stepGame e g = case g.state of
@@ -20,13 +20,13 @@ stepPlay e g = case e of
                 b' = if a then flyUp b else flyDown b
                 shiftOb ob = { ob | x <- ob.x - 10.0 }
                 visibleOb ob = ob.x > (toFloat playAreaLeft) - ob.width
-                obs' = filter visibleOb <| map shiftOb g.obstacles
+                obs' = List.filter visibleOb <| List.map shiftOb g.obstacles
                 state' = if anyCollision b' obs' then GameOver else Active
             in { g | bird <- b', obstacles <- obs', state <- state' }
   Add obs -> { g | obstacles <- obs :: g.obstacles }
   Click -> g
 
-anyCollision : Bird -> [Obstacle] -> Bool
+anyCollision : Bird -> List Obstacle -> Bool
 anyCollision b obs = let bx = toFloat b.x
                          by = toFloat b.y
                          outOfBounds b = b.y > playAreaTop || b.y < playAreaBottom
@@ -34,7 +34,7 @@ anyCollision b obs = let bx = toFloat b.x
                          between x l u = x >= l && x <= u
                          sameY b o = between by (o.y - o.height) (o.y + o.height)
                          collision o = b `sameX` o && (outOfBounds b || b `sameY` o)
-                     in any collision obs
+                     in List.any collision obs
 
 flyUp : Bird -> Bird
 flyUp bird = let vy' = bird.vy + 2

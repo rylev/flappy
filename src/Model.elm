@@ -1,12 +1,12 @@
 module Model where
 
-type Game = { bird : Bird, obstacles : [Obstacle], state : GameState }
-type Bird = { x : Int, y : Int, vy : Int }
-type Obstacle = { x : Float, y : Float, height : Float, width : Float }
-type PlayArea = { height : Int, width : Int }
+type alias Game = { bird : Bird, obstacles : List Obstacle, state : GameState }
+type alias Bird = { x : Int, y : Int, vy : Int }
+type alias Obstacle = { x : Float, y : Float, height : Float, width : Float }
+type alias PlayArea = { height : Int, width : Int }
 
-data GameState = Active | GameOver
-data Position = Top | Bottom | Skip
+type GameState = Active | GameOver
+type Position = Top | Bottom | Skip
 
 defaultGame : Game
 defaultGame = { bird = defaultBird, obstacles = [], state = Active }
@@ -24,10 +24,10 @@ playArea : PlayArea
 playArea = { height = 500, width = 900 }
 
 playAreaTop : Int
-playAreaTop = div playArea.height 2
+playAreaTop = playArea.height // 2
 
 playAreaRight : Int
-playAreaRight = div playArea.width 2
+playAreaRight = playArea.width // 2
 
 playAreaLeft : Int
 playAreaLeft = 0 - playAreaRight
