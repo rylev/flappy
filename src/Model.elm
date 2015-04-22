@@ -1,8 +1,10 @@
 module Model where
 
+import Random
+
 type alias Game = { bird : Bird, obstacles : List Obstacle, state : GameState }
 type alias Bird = { x : Int, y : Int, vy : Int }
-type alias Obstacle = { x : Float, y : Float, height : Float, width : Float }
+type alias Obstacle = { x : Float, y : Float, height : Float, width : Float, seed: Random.Seed }
 type alias PlayArea = { height : Int, width : Int }
 
 type GameState = Active | GameOver
@@ -18,7 +20,8 @@ defaultObstacle : Obstacle
 defaultObstacle = { x = toFloat playAreaRight,
                     y = toFloat playAreaTop,
                     height = 300,
-                    width = 60 }
+                    width = 60,
+                    seed  = Random.initialSeed 10}
 
 playArea : PlayArea
 playArea = { height = 500, width = 900 }
@@ -35,12 +38,15 @@ playAreaLeft = 0 - playAreaRight
 playAreaBottom : Int
 playAreaBottom = 0 - playAreaTop
 
-newObstacle : Float -> Position -> Obstacle
-newObstacle f p = let o = defaultObstacle
-                   in { o |
-                     height <- clamp 0 300 (f * o.height),
-                     y <- case p of
-                            Bottom-> -o.y
-                            Skip -> o.y + 10000000
-                            Top -> o.y
-                     }
+newObstacle : Float -> Position -> Random.Seed -> Obstacle
+newObstacle f p s = let o = defaultObstacle
+                    in { o | height <- clamp 0 300 (f * o.height),
+                             y      <- newPosition p o,
+                             seed   <- s}
+
+newPosition : Position -> Obstacle -> Float
+newPosition p o = case p of
+                    Bottom-> -o.y
+                    Skip -> o.y + 10000000
+                    Top -> o.y
+
