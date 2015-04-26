@@ -1,6 +1,6 @@
 module Controller where
 
-import Model exposing (..)
+import Model exposing (Obstacle, GameState(Active,GameOver), Game, Bird)
 
 type Event = Add Obstacle | Tick Bool | Click
 
@@ -11,30 +11,44 @@ stepGame e g = case g.state of
 
 gameOver : Event -> Game -> Game
 gameOver e g = case e of
-  Click -> defaultGame
+  Click -> Model.defaultGame
   _ -> g
 
 stepPlay : Event -> Game -> Game
 stepPlay e g = case e of
-  Tick a -> let b = g.bird
-                b' = if a then flyUp b else flyDown b
-                shiftOb ob = { ob | x <- ob.x - 10.0 }
-                visibleOb ob = ob.x > (toFloat playAreaLeft) - ob.width
-                obs' = List.filter visibleOb <| List.map shiftOb g.obstacles
-                state' = if anyCollision b' obs' then GameOver else Active
+  Tick keyIsPressed -> let b = g.bird
+                           b' = if keyIsPressed then flyUp b else flyDown b
+                           shiftOb ob = { ob | x <- ob.x - 10.0 }
+                           obIsVisible ob = ob.x > (toFloat Model.playAreaLeft) - ob.width
+                           obs' = List.filter obIsVisible <| List.map shiftOb g.obstacles
+                           state' = if anyCollision b' obs' then GameOver else Active
             in { g | bird <- b', obstacles <- obs', state <- state' }
   Add obs -> { g | obstacles <- obs :: g.obstacles }
   Click -> g
 
 anyCollision : Bird -> List Obstacle -> Bool
-anyCollision b obs = let bx = toFloat b.x
-                         by = toFloat b.y
-                         outOfBounds b = b.y > playAreaTop || b.y < playAreaBottom
-                         sameX b o = bx == (o.x - (o.width / 2))
-                         between x l u = x >= l && x <= u
-                         sameY b o = between by (o.y - o.height) (o.y + o.height)
-                         collision o = b `sameX` o && (outOfBounds b || b `sameY` o)
-                     in List.any collision obs
+anyCollision bird obs = List.any (\ob -> collision bird ob) obs
+
+collision : Bird -> Obstacle -> Bool
+collision bird obstacle = bird `hasSameXPosition` obstacle && (isOutOfBounds bird || bird `hasSameYPosition` obstacle)
+
+hasSameYPosition : Bird -> Obstacle -> Bool
+hasSameYPosition bird obstacle = let yPosition = toFloat bird.y
+                                     obstacleBottom = (obstacle.y - obstacle.height)
+                                     obstacleTop = (obstacle.y + obstacle.height)
+                                 in between yPosition obstacleBottom obstacleTop
+
+hasSameXPosition : Bird -> Obstacle -> Bool
+hasSameXPosition bird obstacle = let xPosition = toFloat bird.x
+                                     obstacleFront = (obstacle.x - (obstacle.width / 2))
+                                     obstacleBack = (obstacle.x + (obstacle.width / 2))
+                                 in between xPosition obstacleFront obstacleBack
+
+isOutOfBounds : Bird -> Bool
+isOutOfBounds bird = bird.y > Model.playAreaTop || bird.y < Model.playAreaBottom
+
+between : Float -> Float -> Float -> Bool
+between a b c = a >= b && a <= c
 
 flyUp : Bird -> Bird
 flyUp bird = let vy' = bird.vy + 2
@@ -47,4 +61,4 @@ flyDown bird = let vy' = bird.vy - 2
 fly : Int -> Bird -> Bird
 fly vy bird = let y' = bird.y + vy
                   vy' = clamp -10 10 vy
-               in {bird | y <- y', vy <- vy' }
+               in { bird | y <- y', vy <- vy' }

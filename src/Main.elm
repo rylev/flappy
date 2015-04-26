@@ -26,7 +26,7 @@ obsInterval = every <| 500 * millisecond
 
 input : Signal C.Event
 input = mergeMany [
-          map C.Tick keyboardInput ,
+          map C.Tick keyboardInput,
           map C.Add obstacles,
           map (\_ -> C.Click) Mouse.clicks
         ]
@@ -40,17 +40,12 @@ toPosition f = if | f < 0.4 -> M.Bottom
                 | f >= 0.4 && f < 0.6 -> M.Skip
                 | f >= 0.6 -> M.Top
 
-createObstacle : Random.Seed -> M.Obstacle
-createObstacle seed = let (randomFloat, newSeed) = Random.generate obstacleGenerator seed
-                          position = toPosition randomFloat
-                      in M.newObstacle randomFloat position newSeed
+randomFloat : Signal Float
+randomFloat = let randomSeed = map (\time -> Random.initialSeed (floor time)) <| Time.every Time.second
+                  generator = Random.float 0 1
+                  doGeneration seed = Random.generate generator seed
+              in map (\(float, _) -> float) <| map doGeneration randomSeed
 
-obstacleGenerator : Random.Generator Float
-obstacleGenerator = Random.float 0 1
 
 obstacles : Signal M.Obstacle
-obstacles = foldp (\_ prevObs -> createObstacle prevObs.seed) firstObstacle <| Time.every Time.second
-
--- TODO: Since the first obstacle is always the same. Create a Random first obstacle
-firstObstacle : M.Obstacle
-firstObstacle = M.newObstacle 9.2 M.Top <| Random.initialSeed 123
+obstacles = map2 (\f1 f2 -> M.newObstacle f1 (toPosition f2)) randomFloat randomFloat
