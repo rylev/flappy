@@ -23,10 +23,15 @@ renderGameOver : WindowDimensions -> Game -> Element
 renderGameOver winDim game = renderScreen winDim [gameOverText, renderFinalScore game.points]
 
 gameOverText : Form
-gameOverText = Collage.text <| Text.height 40 <| Text.fromString "Game Over!!"
+gameOverText = Text.fromString "Game Over!!"
+  |> Text.height 40
+  |> Collage.text
 
 renderFinalScore : Int -> Form
-renderFinalScore score = Collage.move (0, -100) <| Collage.text <| Text.fromString <| ("Final Score! " ++ toString score)
+renderFinalScore score = ("Final Score! " ++ toString score)
+  |> Text.fromString
+  |> Collage.text
+  |> Collage.move (0, -100)
 
 renderScreen : WindowDimensions -> List Form -> Element
 renderScreen winDim contents = renderBackground winDim <| renderPlayArea contents
@@ -49,4 +54,6 @@ renderOb : Obstacle -> Form
 renderOb ob = Collage.move (ob.x, ob.y) <| Collage.filled green <| Collage.rect ob.width (2 * ob.height)
 
 renderPoints : Int -> Form
-renderPoints ps = Collage.move (375.0, 200.0) <| Collage.toForm <| Element.show ps
+renderPoints ps = Element.show ps
+  |> Collage.toForm
+  |> Collage.move (375.0, 200.0)

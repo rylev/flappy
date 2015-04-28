@@ -44,7 +44,7 @@ tickGame keyIsPressed game =
   in { game | bird <- b', obstacles <- obs', state <- state', points <- points' }
 
 anyCollision : Bird -> List Obstacle -> Bool
-anyCollision bird obs = List.any (\ob -> collision bird ob) obs
+anyCollision bird obs = List.any (collision bird) obs
 
 collision : Bird -> Obstacle -> Bool
 collision bird obstacle = bird `hasSameXPosition` obstacle && (isOutOfBounds bird || bird `hasSameYPosition` obstacle)
