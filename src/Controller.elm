@@ -16,15 +16,20 @@ gameOver e g = case e of
 
 stepPlay : Event -> Game -> Game
 stepPlay e g = case e of
-  Tick keyIsPressed -> let b = g.bird
-                           b' = if keyIsPressed then flyUp b else flyDown b
-                           shiftOb ob = { ob | x <- ob.x - 10.0 }
-                           obIsVisible ob = ob.x > (toFloat Model.playAreaLeft) - ob.width
-                           obs' = List.filter obIsVisible <| List.map shiftOb g.obstacles
-                           state' = if anyCollision b' obs' then GameOver else Active
-            in { g | bird <- b', obstacles <- obs', state <- state' }
+  Tick keyIsPressed -> tickGame keyIsPressed g
   Add obs -> { g | obstacles <- obs :: g.obstacles }
   Click -> g
+
+tickGame : Bool -> Game -> Game
+tickGame keyIsPressed game =
+  let b = game.bird
+      b' = if keyIsPressed then flyUp b else flyDown b
+      shiftOb ob = { ob | x <- ob.x - 10.0 }
+      obIsVisible ob = ob.x > (toFloat Model.playAreaLeft) - ob.width
+      obs' = List.filter obIsVisible <| List.map shiftOb game.obstacles
+      state' = if anyCollision b' obs' then GameOver else Active
+      points' = game.points + 1
+  in { game | bird <- b', obstacles <- obs', state <- state', points <- points' }
 
 anyCollision : Bird -> List Obstacle -> Bool
 anyCollision bird obs = List.any (\ob -> collision bird ob) obs
@@ -61,4 +66,4 @@ flyDown bird = let vy' = bird.vy - 2
 fly : Int -> Bird -> Bird
 fly vy bird = let y' = bird.y + vy
                   vy' = clamp -10 10 vy
-               in { bird | y <- y', vy <- vy' }
+              in { bird | y <- y', vy <- vy' }

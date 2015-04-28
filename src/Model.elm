@@ -2,7 +2,7 @@ module Model where
 
 import Random
 
-type alias Game = { bird : Bird, obstacles : List Obstacle, state : GameState }
+type alias Game = { bird : Bird, obstacles : List Obstacle, state : GameState, points: Int }
 type alias Bird = { x : Int, y : Int, vy : Int }
 type alias Obstacle = { x : Float, y : Float, height : Float, width : Float }
 type alias PlayArea = { height : Int, width : Int }
@@ -11,7 +11,7 @@ type GameState = Active | GameOver
 type Position = Top | Bottom | Skip
 
 defaultGame : Game
-defaultGame = { bird = defaultBird, obstacles = [], state = Active }
+defaultGame = { bird = defaultBird, obstacles = [], state = Active, points = 0 }
 
 defaultBird : Bird
 defaultBird = { x = -300, y = 0, vy = 0 }

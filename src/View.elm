@@ -9,14 +9,23 @@ type alias WindowDimensions = (Int, Int)
 
 render : WindowDimensions -> Game -> Element
 render winDim game = case game.state of
-  Active -> renderScreen winDim [renderBird game.bird, renderObs game.obstacles]
-  GameOver -> renderScreen winDim [Collage.toForm <| Element.show "Game Over!!"]
+  Active -> renderActiveGame winDim game
+  GameOver -> renderGameOver winDim game
+
+renderActiveGame : WindowDimensions -> Game -> Element
+renderActiveGame winDim game = let bird = renderBird game.bird
+                                   obstables = renderObs game.obstacles
+                                   points = renderPoints game.points
+                               in renderScreen winDim [bird, obstables, points]
+
+renderGameOver : WindowDimensions -> Game -> Element
+renderGameOver winDim game = renderScreen winDim [Collage.toForm <| Element.show "Game Over!!"]
 
 renderScreen : WindowDimensions -> List Form -> Element
 renderScreen winDim contents = renderBackground winDim <| renderPlayArea contents
 
 renderBackground : WindowDimensions -> Element -> Element
-renderBackground (ww, wh) pa = Element.color green <| Element.container ww wh Element.middle pa
+renderBackground (ww, wh) pa = Element.color blue <| Element.container ww wh Element.middle pa
 
 renderPlayArea : List Form -> Element
 renderPlayArea con = let area = Collage.collage playArea.width playArea.height con
@@ -30,4 +39,7 @@ renderObs : List Obstacle -> Form
 renderObs obs = Collage.group <| List.map renderOb obs
 
 renderOb : Obstacle -> Form
-renderOb ob = Collage.move (ob.x, ob.y) <| Collage.filled blue <| Collage.rect ob.width (2 * ob.height)
+renderOb ob = Collage.move (ob.x, ob.y) <| Collage.filled green <| Collage.rect ob.width (2 * ob.height)
+
+renderPoints : Int -> Form
+renderPoints ps = Collage.move (375.0, 200.0) <| Collage.toForm <| Element.show ps
