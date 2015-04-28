@@ -4,6 +4,7 @@ import Model exposing (Obstacle, Game, Bird, playArea, GameState(Active,GameOver
 import Graphics.Collage as Collage exposing (Form)
 import Graphics.Element as Element exposing (Element)
 import Color exposing (green, white, blue)
+import Text
 
 type alias WindowDimensions = (Int, Int)
 
@@ -19,7 +20,13 @@ renderActiveGame winDim game = let bird = renderBird game.bird
                                in renderScreen winDim [bird, obstables, points]
 
 renderGameOver : WindowDimensions -> Game -> Element
-renderGameOver winDim game = renderScreen winDim [Collage.toForm <| Element.show "Game Over!!"]
+renderGameOver winDim game = renderScreen winDim [gameOverText, renderFinalScore game.points]
+
+gameOverText : Form
+gameOverText = Collage.text <| Text.height 40 <| Text.fromString "Game Over!!"
+
+renderFinalScore : Int -> Form
+renderFinalScore score = Collage.move (0, -100) <| Collage.text <| Text.fromString <| ("Final Score! " ++ toString score)
 
 renderScreen : WindowDimensions -> List Form -> Element
 renderScreen winDim contents = renderBackground winDim <| renderPlayArea contents
