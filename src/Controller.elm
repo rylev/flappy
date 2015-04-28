@@ -1,8 +1,9 @@
 module Controller where
 
 import Model exposing (Obstacle, GameState(Active,GameOver), Game, Bird)
+import Random exposing (Seed)
 
-type Event = Add Obstacle | Tick Bool | Click
+type Event = Add Seed | Tick Bool | Click
 
 stepGame : Event -> Game -> Game
 stepGame e g = case g.state of
@@ -17,8 +18,19 @@ gameOver e g = case e of
 stepPlay : Event -> Game -> Game
 stepPlay e g = case e of
   Tick keyIsPressed -> tickGame keyIsPressed g
-  Add obs -> { g | obstacles <- obs :: g.obstacles }
+  Add seed -> { g | obstacles <- (newObstacle seed) :: g.obstacles }
   Click -> g
+
+newObstacle : Seed -> Obstacle
+newObstacle seed = let generator = Random.float 0 1
+                       (f1, seed') = Random.generate generator seed
+                       (f2,_) = Random.generate generator seed'
+                    in Model.newObstacle f1 (toPosition f2)
+
+toPosition : Float -> Model.Position
+toPosition f = if | f < 0.40              -> Model.Bottom
+                  | f >= 0.40 && f < 0.6  -> Model.Skip
+                  | f >= 0.60             -> Model.Top
 
 tickGame : Bool -> Game -> Game
 tickGame keyIsPressed game =

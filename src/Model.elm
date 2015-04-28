@@ -1,7 +1,5 @@
 module Model where
 
-import Random
-
 type alias Game = { bird : Bird, obstacles : List Obstacle, state : GameState, points: Int }
 type alias Bird = { x : Int, y : Int, vy : Int }
 type alias Obstacle = { x : Float, y : Float, height : Float, width : Float }
