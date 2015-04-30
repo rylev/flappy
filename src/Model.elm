@@ -2,11 +2,11 @@ module Model where
 
 type alias Game = { bird : Bird, obstacles : List Obstacle, state : GameState, points: Int }
 type alias Bird = { x : Int, y : Int, vy : Int }
-type alias Obstacle = { x : Float, y : Float, height : Float, width : Float }
+type alias Obstacle = { x : Float, y : Float, height : Float, width : Float , position: Position }
 type alias PlayArea = { height : Int, width : Int }
 
 type GameState = Active | GameOver
-type Position = Top | Bottom | Skip
+type Position = Top | Bottom
 
 defaultGame : Game
 defaultGame = { bird = defaultBird, obstacles = [], state = Active, points = 0 }
@@ -18,7 +18,8 @@ defaultObstacle : Obstacle
 defaultObstacle = { x = toFloat playAreaRight,
                     y = toFloat playAreaTop,
                     height = 300,
-                    width = 60 }
+                    width = 60,
+                    position = Top }
 
 playArea : PlayArea
 playArea = { height = 500, width = 900 }
@@ -36,12 +37,12 @@ playAreaBottom : Int
 playAreaBottom = 0 - playAreaTop
 
 newObstacle : Float -> Position -> Obstacle
-newObstacle f p = let o = defaultObstacle
-                  in { o | height <- clamp 0 300 (f * o.height),
-                           y      <- newPosition p o }
+newObstacle scaleFactor position =
+  { defaultObstacle | height   <- clamp 0 300 (scaleFactor * defaultObstacle.height),
+                      position <- position,
+                      y        <- positionAsFloat position }
 
-newPosition : Position -> Obstacle -> Float
-newPosition p o = case p of
-                    Bottom-> -o.y
-                    Skip -> o.y + 10000000
-                    Top -> o.y
+positionAsFloat : Position -> Float
+positionAsFloat position = case position of
+  Bottom-> -defaultObstacle.y
+  Top -> defaultObstacle.y

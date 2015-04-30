@@ -27,7 +27,6 @@ updateObstacles game seed = case newObstacle seed of
   Just o -> { game | obstacles <- o :: game.obstacles }
   Nothing -> game
 
-
 newObstacle : Seed -> Maybe Obstacle
 newObstacle seed = let generator = Random.float 0 1
                        (f1, seed') = Random.generate generator seed
@@ -55,13 +54,16 @@ anyCollision : Bird -> List Obstacle -> Bool
 anyCollision bird obs = List.any (collision bird) obs
 
 collision : Bird -> Obstacle -> Bool
-collision bird obstacle = bird `hasSameXPosition` obstacle && (isOutOfBounds bird || bird `hasSameYPosition` obstacle)
+collision bird obstacle = bird `hasSameXPosition` obstacle && bird `hasSameYPosition` obstacle
 
 hasSameYPosition : Bird -> Obstacle -> Bool
-hasSameYPosition bird obstacle = let yPosition = toFloat bird.y
-                                     obstacleBottom = (obstacle.y - obstacle.height)
-                                     obstacleTop = (obstacle.y + obstacle.height)
-                                 in between yPosition obstacleBottom obstacleTop
+hasSameYPosition bird obstacle =
+  let yPosition = toFloat bird.y
+      obstacleBottom = (obstacle.y - obstacle.height)
+      obstacleTop = (obstacle.y + obstacle.height)
+  in case obstacle.position of
+    Model.Top -> yPosition > obstacleBottom
+    Model.Bottom -> yPosition < obstacleTop
 
 hasSameXPosition : Bird -> Obstacle -> Bool
 hasSameXPosition bird obstacle = let xPosition = toFloat bird.x
