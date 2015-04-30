@@ -38,7 +38,7 @@ playAreaBottom = 0 - playAreaTop
 
 newObstacle : Float -> Position -> Obstacle
 newObstacle scaleFactor position =
-  { defaultObstacle | height   <- clamp 0 300 (scaleFactor * defaultObstacle.height),
+  { defaultObstacle | height   <- clamp 100 270 (scaleFactor * defaultObstacle.height),
                       position <- position,
                       y        <- positionAsFloat position }
 

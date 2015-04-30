@@ -59,17 +59,18 @@ collision bird obstacle = bird `hasSameXPosition` obstacle && bird `hasSameYPosi
 hasSameYPosition : Bird -> Obstacle -> Bool
 hasSameYPosition bird obstacle =
   let yPosition = toFloat bird.y
-      obstacleBottom = (obstacle.y - obstacle.height)
-      obstacleTop = (obstacle.y + obstacle.height)
+      obstacleBottom = obstacle.y - obstacle.height
+      obstacleTop = obstacle.y + obstacle.height
   in case obstacle.position of
     Model.Top -> yPosition > obstacleBottom
     Model.Bottom -> yPosition < obstacleTop
 
 hasSameXPosition : Bird -> Obstacle -> Bool
-hasSameXPosition bird obstacle = let xPosition = toFloat bird.x
-                                     obstacleFront = (obstacle.x - (obstacle.width / 2))
-                                     obstacleBack = (obstacle.x + (obstacle.width / 2))
-                                 in between xPosition obstacleFront obstacleBack
+hasSameXPosition bird obstacle =
+  let xPosition = toFloat bird.x
+      obstacleFront = (obstacle.x - (obstacle.width / 2))
+      obstacleBack = (obstacle.x + (obstacle.width / 2))
+  in between xPosition obstacleFront obstacleBack
 
 isOutOfBounds : Bird -> Bool
 isOutOfBounds bird = bird.y > Model.playAreaTop || bird.y < Model.playAreaBottom

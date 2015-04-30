@@ -35,4 +35,4 @@ obsInterval : Signal Time
 obsInterval = Time.every <| 500 * Time.millisecond
 
 randomSeed : Signal Seed
-randomSeed = map (\time -> Random.initialSeed (floor time)) <| obsInterval
+randomSeed = map (Random.initialSeed << floor) obsInterval
