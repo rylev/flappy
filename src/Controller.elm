@@ -2,35 +2,43 @@ module Controller where
 
 import Model exposing (Obstacle, GameState(Active,GameOver), Game, Bird)
 import Random exposing (Seed)
+import Maybe exposing (Maybe(Just,Nothing))
 
 type Event = Add Seed | Tick Bool | Click
 
 stepGame : Event -> Game -> Game
 stepGame e g = case g.state of
   Active -> stepPlay e g
-  GameOver -> gameOver e g
+  GameOver -> stepGameOver e g
 
-gameOver : Event -> Game -> Game
-gameOver e g = case e of
+stepGameOver : Event -> Game -> Game
+stepGameOver e g = case e of
   Click -> Model.defaultGame
   _ -> g
 
 stepPlay : Event -> Game -> Game
-stepPlay e g = case e of
-  Tick keyIsPressed -> tickGame keyIsPressed g
-  Add seed -> { g | obstacles <- (newObstacle seed) :: g.obstacles }
-  Click -> g
+stepPlay event game = case event of
+  Tick keyIsPressed -> tickGame keyIsPressed game
+  Add seed -> updateObstacles game seed
+  Click -> game
 
-newObstacle : Seed -> Obstacle
+updateObstacles : Game -> Seed -> Game
+updateObstacles game seed = case newObstacle seed of
+  Just o -> { game | obstacles <- o :: game.obstacles }
+  Nothing -> game
+
+
+newObstacle : Seed -> Maybe Obstacle
 newObstacle seed = let generator = Random.float 0 1
                        (f1, seed') = Random.generate generator seed
                        (f2,_) = Random.generate generator seed'
-                    in Model.newObstacle f1 (toPosition f2)
+                       position = toPosition f2
+                    in Maybe.map (Model.newObstacle f1) position
 
-toPosition : Float -> Model.Position
-toPosition f = if | f < 0.40              -> Model.Bottom
-                  | f >= 0.40 && f < 0.6  -> Model.Skip
-                  | f >= 0.60             -> Model.Top
+toPosition : Float -> Maybe Model.Position
+toPosition f = if | f < 0.40              -> Just Model.Bottom
+                  | f >= 0.40 && f < 0.6  -> Nothing
+                  | f >= 0.60             -> Just Model.Top
 
 tickGame : Bool -> Game -> Game
 tickGame keyIsPressed game =
