@@ -1,38 +1,53 @@
-module Main where
+module Main exposing (main)
 
-import Window
+import Html.App as App
 import Keyboard
 import Mouse
-import Signal exposing (..)
-import Graphics.Element exposing (Element)
+import Element exposing (..)
 import Time exposing (Time)
 import Random exposing (Seed)
+import AnimationFrame
 
 import View
 import Model
-import Controller exposing (Event(Tick,Add,Click))
+import Controller exposing (Event(Tick,Add,Click,UpArrowPressed,UpArrowReleased))
 
-main : Signal Element
-main = View.render <~ Window.dimensions ~ (foldp Controller.stepGame Model.defaultGame input)
+main = App.program
+  { init = (Model.defaultGame, Cmd.none)
+  , view = toHtml << (View.render (1270, 600))
+  , update = \event game -> (Controller.stepGame event game, Cmd.none)
+  , subscriptions = input
+  }
 
 -- Input
 
-input : Signal Event
-input = mergeMany [
-          map Tick keyboardInput,
-          map Add randomSeed,
-          map (\_ -> Click) Mouse.clicks
+
+input : Model.Game -> Sub Event
+input _ = Sub.batch [
+          arrowPresses,
+          arrowReleases,
+          tick,
+          Sub.map Add randomSeed,
+          Mouse.clicks (\_ -> Click)
         ]
 
-keyboardInput : Signal Bool
-keyboardInput = let isUp keys = keys.y == 1
-                in map isUp <| sampleOn frameRate Keyboard.arrows
+arrowPresses : Sub Event
+arrowPresses = let toEvent keyCode = case keyCode of
+                  38 -> UpArrowPressed
+                  _  -> Tick
+                in Keyboard.downs toEvent
 
-frameRate : Signal Time
-frameRate = Time.fps 30
+arrowReleases : Sub Event
+arrowReleases = let toEvent keyCode = case keyCode of
+                  38 -> UpArrowReleased
+                  _  -> Tick
+                in Keyboard.ups toEvent
 
-obsInterval : Signal Time
+tick : Sub Event
+tick = AnimationFrame.diffs (\_ -> Tick)
+
+obsInterval : (Time -> a) -> Sub a
 obsInterval = Time.every <| 500 * Time.millisecond
 
-randomSeed : Signal Seed
-randomSeed = map (Random.initialSeed << floor) obsInterval
+randomSeed : Sub Seed
+randomSeed = obsInterval (Random.initialSeed << floor)
