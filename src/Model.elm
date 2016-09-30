@@ -1,6 +1,6 @@
-module Model where
+module Model exposing (..)
 
-type alias Game = { bird : Bird, obstacles : List Obstacle, state : GameState, points: Int }
+type alias Game = { bird : Bird, obstacles : List Obstacle, state : GameState, points: Int, arrowPressed: Bool }
 type alias Bird = { x : Int, y : Int, vy : Int }
 type alias Obstacle = { x : Float, y : Float, height : Float, width : Float , position: Position }
 type alias PlayArea = { height : Int, width : Int }
@@ -9,7 +9,7 @@ type GameState = Active | GameOver
 type Position = Top | Bottom
 
 defaultGame : Game
-defaultGame = { bird = defaultBird, obstacles = [], state = Active, points = 0 }
+defaultGame = { bird = defaultBird, obstacles = [], state = Active, points = 0, arrowPressed = False }
 
 defaultBird : Bird
 defaultBird = { x = -300, y = 0, vy = 0 }
@@ -38,9 +38,9 @@ playAreaBottom = 0 - playAreaTop
 
 newObstacle : Float -> Position -> Obstacle
 newObstacle scaleFactor position =
-  { defaultObstacle | height   <- clamp 0 300 (scaleFactor * defaultObstacle.height),
-                      position <- position,
-                      y        <- positionAsFloat position }
+  { defaultObstacle | height   = clamp 100 270 (scaleFactor * defaultObstacle.height),
+                      position = position,
+                      y        = positionAsFloat position }
 
 positionAsFloat : Position -> Float
 positionAsFloat position = case position of

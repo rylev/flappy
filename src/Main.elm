@@ -1,38 +1,16 @@
-module Main where
+module Main exposing (main)
 
-import Window
-import Keyboard
-import Mouse
-import Signal exposing (..)
-import Graphics.Element exposing (Element)
-import Time exposing (Time)
-import Random exposing (Seed)
+import Html.App as App
+import Element
 
 import View
 import Model
-import Controller exposing (Event(Tick,Add,Click))
+import Controller
+import Input
 
-main : Signal Element
-main = View.render <~ Window.dimensions ~ (foldp Controller.stepGame Model.defaultGame input)
-
--- Input
-
-input : Signal Event
-input = mergeMany [
-          map Tick keyboardInput,
-          map Add randomSeed,
-          map (\_ -> Click) Mouse.clicks
-        ]
-
-keyboardInput : Signal Bool
-keyboardInput = let isUp keys = keys.y == 1
-                in map isUp <| sampleOn frameRate Keyboard.arrows
-
-frameRate : Signal Time
-frameRate = Time.fps 30
-
-obsInterval : Signal Time
-obsInterval = Time.every <| 500 * Time.millisecond
-
-randomSeed : Signal Seed
-randomSeed = map (\time -> Random.initialSeed (floor time)) <| obsInterval
+main = App.program
+  { init = (Model.defaultGame, Cmd.none)
+  , view = Element.toHtml << (View.render (1270, 600))
+  , update = \event game -> (Controller.stepGame event game, Cmd.none)
+  , subscriptions = \_ -> Input.input
+  }

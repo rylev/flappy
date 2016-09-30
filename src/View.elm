@@ -1,8 +1,8 @@
-module View where
+module View exposing (..)
 
 import Model exposing (Obstacle, Game, Bird, playArea, GameState(Active,GameOver))
-import Graphics.Collage as Collage exposing (Form)
-import Graphics.Element as Element exposing (Element)
+import Collage as Collage exposing (Form)
+import Element as Element exposing (Element)
 import Color exposing (green, white, blue)
 import Text
 
