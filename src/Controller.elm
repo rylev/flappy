@@ -76,8 +76,8 @@ hasSameYPosition bird obstacle =
 hasSameXPosition : Bird -> Obstacle -> Bool
 hasSameXPosition bird obstacle =
   let xPosition = toFloat bird.x
-      obstacleFront = (obstacle.x - (obstacle.width / 2))
-      obstacleBack = (obstacle.x + (obstacle.width / 2))
+      obstacleFront = obstacle.x - (obstacle.width / 2)
+      obstacleBack = obstacle.x + (obstacle.width / 2)
   in between xPosition obstacleFront obstacleBack
 
 isOutOfBounds : Bird -> Bool
